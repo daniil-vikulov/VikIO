@@ -1,8 +1,14 @@
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "ConstantParameter"
+#pragma clang diagnostic ignored "-Wimplicit-exception-spec-mismatch"
 #define FAST_MEMORY
 ///////////////////////////////////////////////////////////
-#include "vector"
-#include "iostream"
+#include <vector>
+#include <iostream>
 #include <cassert>
+#include <new>
+#include <cstddef>
+#include <cstdint>
 
 template<typename T, typename ... Ts>
 [[maybe_unused]]inline void print(T a, Ts ... args);
@@ -11,23 +17,33 @@ template<typename T>
 [[maybe_unused]]inline void print(T a);
 
 #ifdef FAST_MEMORY
-const int MAX_MEM = 1000000000;
-int m_pos = 0;
-char *mem = new char[MAX_MEM];//NOLINT
+const int32_t MAX_MEM = 1'000'000'000;
+size_t m_pos = 0;
+int8_t *mem = nullptr;
 
-void *operator new(size_t n) {
-    assert((m_pos += n) <= MAX_MEM); // NOLINT(*-assert-side-effect)
-    return (void *) (mem + m_pos - n);
+constexpr size_t alignUp(size_t n, size_t align) {
+    return (n + (align - 1)) & ~(align - 1);
 }
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wimplicit-exception-spec-mismatch"
+void *operator new(size_t n) {
+    if (!mem) {
+        mem = static_cast<int8_t *>(malloc(MAX_MEM));
+    }
+
+    size_t pos = alignUp(m_pos, alignof(std::max_align_t));
+
+    if (pos + n > MAX_MEM) {
+        throw std::bad_alloc();
+    }
+
+    m_pos = pos + n;
+    return mem + pos;
+}
+
 
 void operator delete(void *) {}
 
 void operator delete(void *, size_t) {}
-
-#pragma clang diagnostic pop
 
 #endif
 namespace vik_io {
@@ -205,3 +221,4 @@ template<typename T, typename ... Ts>
     print(args ...);
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#pragma clang diagnostic pop
