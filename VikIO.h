@@ -3,17 +3,18 @@
 #pragma clang diagnostic ignored "-Wimplicit-exception-spec-mismatch"
 #define FAST_MEMORY
 ///////////////////////////////////////////////////////////
-#include <vector>
 #include <iostream>
+#include <concepts>
 
 template<typename T, typename ... Ts>
-[[maybe_unused]]inline void print(T a, Ts ... args);
+[[maybe_unused]]void print(const T& a, const Ts& ... args);
 
 template<typename T>
-[[maybe_unused]]inline void print(T a);
+[[maybe_unused]]void print(const T& a);
 
 #ifdef FAST_MEMORY
 const size_t kMaxAllocatedBytes = 1'000'000'000;
+static constexpr char kContainerSep = '\n';
 size_t m_pos = 0;
 std::byte* mem = static_cast<std::byte*>(malloc(kMaxAllocatedBytes));
 
@@ -22,6 +23,18 @@ struct Deleter {
     free(mem);
   }
 };
+
+namespace UtilConcepts {
+  template <typename T>
+  concept IndexedContainer = requires(T t, size_t index) {
+    { t.size() } -> std::same_as<size_t>;
+    { t.size() } noexcept;
+    { t[index] } -> std::same_as<typename T::value_type&>;
+  };
+
+  template <typename T>
+  concept Numeric = std::is_arithmetic_v<T>;
+}
 
 // free all memory after program ends
 [[maybe_unused]] Deleter static_deleter;
@@ -57,13 +70,13 @@ namespace vik_io {
 
     inline char getChar();
 
-    template<typename T>
+    template<UtilConcepts::Numeric T>
     [[maybe_unused]] inline void read(T& num);
 
     [[maybe_unused]] inline void read(std::string& s);
 
-    template<typename T>
-    [[maybe_unused]] inline void read(std::vector<T>& v);
+    template<UtilConcepts::IndexedContainer T>
+    [[maybe_unused]] inline void read(T& v);
 
     [[maybe_unused]] inline void read(char& c);
 
@@ -76,8 +89,8 @@ namespace vik_io {
       return ans;
     }
 
-    template<typename T>
-    [[maybe_unused]] inline void read(std::vector<T>& v) {
+    template<UtilConcepts::IndexedContainer T>
+    [[maybe_unused]] inline void read(T& v) {
       for (int i = 0; i < v.size(); ++i) {
         read(v[i]);
       }
@@ -87,7 +100,7 @@ namespace vik_io {
       c = getChar();
     }
 
-    template<typename T>
+    template<UtilConcepts::Numeric T>
     [[maybe_unused]] inline void read(T& num) {
       char c = getChar();
       T x = 0;
@@ -124,13 +137,11 @@ namespace vik_io {
   }
 
   namespace out {
-    template<typename T>
-    [[maybe_unused]] inline void write(T& num);
+    template<UtilConcepts::Numeric T>
+    [[maybe_unused]] inline void write(T num);
 
-    [[maybe_unused]] inline void write(std::string& s);
-
-    template<typename T>
-    [[maybe_unused]] inline void write(std::vector<T>& v);
+    template<UtilConcepts::IndexedContainer T>
+    [[maybe_unused]] inline void write(const T& container);
 
     [[maybe_unused]] inline void write(char c);
 
@@ -147,15 +158,21 @@ namespace vik_io {
       PUT_CHAR(c);
     }
 
-    template<typename T>
-    [[maybe_unused]]void write(std::vector<T>& v) {
-      for (int i = 0; i < v.size(); ++i) {
-        ::print(v[i]);
+    template<UtilConcepts::IndexedContainer T>
+    [[maybe_unused]]void write(const T& container) {
+      for (int i = 0; i < container.size(); ++i) {
+        write(container[i]);
+        if constexpr (!std::is_same_v<T, std::string>) {
+          if (i < container.size() - 1) {
+            write(kContainerSep);
+          }
+        }
       }
     }
 
-    template<typename T>
-    [[maybe_unused]] inline void write(T& num) {
+    template<UtilConcepts::Numeric T>
+    [[maybe_unused]]void write(T num) {
+
       if (num < 0) {
         PUT_CHAR('-');
         num *= -1;
@@ -173,12 +190,6 @@ namespace vik_io {
       }
       for (int j = i - 1; j >= 0; --j) {
         PUT_CHAR(buf[j]);
-      }
-    }
-
-    [[maybe_unused]] inline void write(std::string& s) {
-      for (char i: s) {
-        PUT_CHAR(i);
       }
     }
   }
@@ -205,7 +216,7 @@ template<typename T, typename ... Ts>
 }
 
 template<typename T>
-[[maybe_unused]]inline void print(T a) {
+[[maybe_unused]]inline void print(const T& a) {
   vik_io::out::write(a);
   if (sep != '\0') {
     vik_io::out::write(sep);

@@ -2,5 +2,5 @@
 
 int main() {
     Tester::memory();
-    //Tester::test();
+    Tester::test();
 }
