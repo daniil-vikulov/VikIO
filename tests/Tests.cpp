@@ -18,7 +18,7 @@ void restore() {
 
 
 void Tester::test() {
-  //redirect();
+  redirect();
   int num1, num2;
   std::string s;
   std::vector<int> array(3);
@@ -32,7 +32,7 @@ void Tester::test() {
   print(s);
   print(num2);
   print(array);
-  //restore();
+  restore();
 }
 
 void Tester::memoryTemp(size_t objectSize) {

@@ -8,7 +8,7 @@
 
 #ifdef FAST_MEMORY
 const size_t kMaxAllocatedBytes = 1'000'000'000;
-static constexpr char kContainerSep = '\n';
+static constexpr char kContainerSep = ' ';
 size_t m_pos = 0;
 std::byte* mem = static_cast<std::byte*>(malloc(kMaxAllocatedBytes));
 
