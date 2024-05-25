@@ -6,12 +6,6 @@
 #include <iostream>
 #include <concepts>
 
-template<typename T, typename ... Ts>
-[[maybe_unused]]void print(const T& a, const Ts& ... args);
-
-template<typename T>
-[[maybe_unused]]void print(const T& a);
-
 #ifdef FAST_MEMORY
 const size_t kMaxAllocatedBytes = 1'000'000'000;
 static constexpr char kContainerSep = '\n';
