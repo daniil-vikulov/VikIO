@@ -38,8 +38,7 @@ Template function for printing such types as: `char`, `unsigned char`, `int`, `u
 
 As for integer-like types, the function will skip all the characters before an integer value will be found: valid
 integer is a continues sequence of digits with potential `-` before. If the function faces with a non-digit character,
-it reads and ignores it
-
+it reads and ignores it. That is why it is crucial to fully understand the variable of which type is going to be read.
 ### `read(std::string &str)`
 
 The string is a sequence of characters from the current position to the end of the stream or till `\n`
@@ -59,6 +58,9 @@ Input:
 The string to read must not exceed the size of internal buf macro (You can specify it manually in the library code).
 
 ### <code>read(std::vector<<text>T</text>> &array)</code>
+
+Must be a pre-allocated vector, which will read array.size() objects of `T`.
+Note that `T` must be supported for reading. Eventually, the array will be filled with corresponding data
 
 ## Development & Support
 
